@@ -8,9 +8,6 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // Performance optimizations
-  swcMinify: true,
-
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],

@@ -6,7 +6,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 A Next.js 15 dashboard for tracking and managing cryptographic systems vulnerable to quantum computing attacks. Uses TypeScript, Tailwind CSS v4, and the App Router architecture.
 
-**Key Context**: This is currently a frontend-only application with hardcoded data in `lib/data.ts`. Future plans include Directus CMS integration for dynamic data management and JWT-based authentication.
+**Key Context**: This is a Directus CMS-backed application. The frontend displays vulnerabilities and handles public submissions. Directus manages all data, admin reviews, and publishing. No authentication is needed in the frontend - all admin work happens in Directus dashboard.
 
 ## Development Commands
 
@@ -27,24 +27,22 @@ npm run lint
 ## Architecture
 
 ### Routing Structure (App Router)
-- `/` - Landing page with hero section
-- `/dashboard` - Main vulnerability browser with filtering and modal views
-- `/submit` - Community submission form for new vulnerabilities
-- `/admin` - Review interface for pending submissions
-- `/auth/login` - Login page (UI only, no backend yet)
-- `/auth/register` - Registration page (UI only, no backend yet)
+- `/` - Landing page with technical overview and CTAs
+- `/dashboard` - Main vulnerability browser with search and modal views
+- `/submit` - Public submission form for new vulnerabilities
 
 Each route has its own `page.tsx` and may have a `layout.tsx` for shared UI elements.
 
 ### Data Model
-The core data structure is `VulnerableSystem` defined in `lib/data.ts`:
+The core data structure is `VulnerableSystem` defined in `lib/directus.ts`:
 - Vulnerability metadata (name, description, organization)
-- Risk assessment (vulnerabilityLevel: critical/high/medium/low, score 0-10)
-- Protocol information (affectedProtocols array)
+- Risk assessment (vulnerability_level: critical/high/medium/low, score 0-10)
+- Protocol information (affected_protocols array)
 - Status tracking (verified/pending/under-review)
 - Mitigation strategies (optional)
+- Discovery date (auto-generated)
 
-Currently uses hardcoded array `vulnerableSystems` with 10 sample entries. This will be replaced by Directus CMS API calls.
+Data is stored in Directus CMS in the `vulnerable_systems` collection. The frontend fetches only verified vulnerabilities via `fetchVulnerabilities()` and submits new ones via `submitVulnerability()`.
 
 ### Component Architecture
 **UI Components** (`components/ui/`):
@@ -58,10 +56,11 @@ Currently uses hardcoded array `vulnerableSystems` with 10 sample entries. This 
 - `Logo` - SVG quantum atom icon
 
 ### Styling Conventions
-- Primary color: Purple (purple-600 as base)
-- Secondary colors: Gray scale for text and backgrounds
+- Primary colors: Slate/gray scale for professional, technical feel
+- Accent colors: Blue for primary actions, red/orange/yellow/green for severity indicators
 - Responsive design with mobile-first Tailwind breakpoints (sm, md, lg)
 - Font system: Geist Sans (body) and Geist Mono (code) loaded via next/font
+- Clean, minimal design without heavy gradients or marketing fluff
 - Color utilities: `getVulnerabilityColor()` and `getStatusColor()` in `lib/data.ts`
 
 ### TypeScript Configuration
@@ -96,19 +95,27 @@ className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
 - Compression enabled
 - React Strict Mode for development checks
 
-## Future Development Notes
+## Directus CMS Integration
 
-When implementing Directus CMS integration:
-1. Replace `lib/data.ts` hardcoded array with API calls
-2. Use Next.js API routes (`app/api/`) or server actions for data fetching
-3. Implement proper error handling and loading states
-4. Add revalidation strategies (ISR or on-demand)
+The app uses Directus SDK (`@directus/sdk`) for all data operations:
 
-When adding authentication:
-1. Implement JWT-based auth system
-2. Protect `/admin` route with middleware
-3. Connect login/register pages to auth API
-4. Add role-based access control (public, user, admin)
+**Setup**:
+1. Environment variable: `NEXT_PUBLIC_DIRECTUS_URL`
+2. Directus client configured in `lib/directus.ts`
+3. Collection name: `vulnerable_systems`
+
+**API Functions**:
+- `fetchVulnerabilities()` - Fetches verified vulnerabilities (client-side)
+- `submitVulnerability()` - Creates pending submissions (client-side)
+
+**Admin Workflow**:
+1. Public submits via `/submit` → saved as `pending` in Directus
+2. Admin reviews in Directus dashboard (not in frontend)
+3. Admin changes status to `verified` → appears on website
+
+No backend code needed in Next.js - all admin functionality is in Directus.
+
+See SETUP.md for detailed configuration instructions.
 
 ## Lint Configuration
 Uses Next.js ESLint config with TypeScript rules. Ignores `.next/`, `out/`, `build/`, and `next-env.d.ts`.
