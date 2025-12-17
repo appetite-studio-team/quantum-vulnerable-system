@@ -1,153 +1,123 @@
 import Link from 'next/link';
-import Logo from '@/components/Logo';
+import Navbar from '@/components/Navbar';
 import Button from '@/components/ui/Button';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="border-b border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-3">
-            <Logo className="w-8 h-8 text-slate-700" />
-            <span className="text-lg font-semibold text-slate-900">Quantum Vulnerability Database</span>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen">
+      <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-16 pb-12">
-          <div className="mb-4">
-            <span className="inline-block px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full border border-blue-200">
-              Open Source Research Project
-            </span>
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            Tracking Cryptographic Systems<br />
-            Vulnerable to Quantum Attacks
-          </h1>
-          <p className="text-xl text-slate-600 max-w-3xl mb-8 leading-relaxed">
-            A community-maintained database documenting cryptographic protocols and implementations at risk from quantum computing advances. 
-            Shor's algorithm threatens public-key cryptography. Grover's algorithm weakens symmetric systems. 
-            The transition to post-quantum cryptography is critical.
-          </p>
-          <div className="flex flex-wrap gap-4 mb-16">
-            <Link href="/dashboard">
-              <Button variant="primary" size="lg">
-                Browse Database
-              </Button>
-            </Link>
-            <Link href="/submit">
-              <Button variant="outline" size="lg">
-                Submit Vulnerability
-              </Button>
-            </Link>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        {/* Hero */}
+        <div className="grid lg:grid-cols-12 gap-10 items-start">
+          <div className="lg:col-span-7">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 border border-slate-200 text-xs text-slate-600">
+              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+              Research database • Verified-only publishing
+            </div>
+
+            <h1 className="mt-6 text-5xl md:text-6xl font-semibold tracking-tight text-slate-900 text-balance">
+              Quantum vulnerability tracking for real-world cryptographic systems.
+            </h1>
+
+            <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-2xl">
+              A curated index of systems exposed to quantum attacks, with concise weakness snapshots, protocol impact, and migration recommendations.
+              Submissions are reviewed in Directus and published when verified.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/dashboard">
+                <Button size="lg">Browse database</Button>
+              </Link>
+              <Link href="/submit">
+                <Button variant="secondary" size="lg">Submit a finding</Button>
+              </Link>
+            </div>
+
+            <div className="mt-10 grid sm:grid-cols-3 gap-4">
+              <div className="surface rounded-2xl p-5 shadow-sm">
+                <div className="text-xs text-slate-500">Primary break</div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">RSA / ECC / DH</div>
+                <div className="mt-2 text-xs text-slate-600">Shor-affected public-key primitives</div>
+              </div>
+              <div className="surface rounded-2xl p-5 shadow-sm">
+                <div className="text-xs text-slate-500">Degradation</div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">AES-128 → ~64-bit</div>
+                <div className="mt-2 text-xs text-slate-600">Grover search advantage</div>
+              </div>
+              <div className="surface rounded-2xl p-5 shadow-sm">
+                <div className="text-xs text-slate-500">Migration</div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">PQC + Hybrid</div>
+                <div className="mt-2 text-xs text-slate-600">Kyber / Dilithium / AES-256</div>
+              </div>
+            </div>
           </div>
 
-          {/* Key Metrics */}
-          <div className="grid grid-cols-3 gap-8 mb-20 pb-16 border-b border-slate-200">
-            <div>
-              <div className="text-4xl font-bold text-slate-900 mb-2">24+</div>
-              <div className="text-sm text-slate-600">Documented Vulnerabilities</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-slate-900 mb-2">RSA, ECC, DH</div>
-              <div className="text-sm text-slate-600">Critical Algorithms at Risk</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-slate-900 mb-2">~10 Years</div>
-              <div className="text-sm text-slate-600">Estimated Timeline for Q-Day</div>
-            </div>
-          </div>
-        </div>
+          {/* Right rail */}
+          <div className="lg:col-span-5">
+            <div className="surface rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-900">Research notes</h2>
+                <span className="text-xs text-slate-500 font-mono">v0</span>
+              </div>
 
-        {/* Technical Overview */}
-        <div className="grid md:grid-cols-2 gap-12 mb-20">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">The Quantum Threat</h2>
-            <div className="space-y-4 text-slate-700 leading-relaxed">
-              <p>
-                <strong className="text-slate-900">Shor's Algorithm</strong> can factor large integers and compute discrete logarithms 
-                in polynomial time on a quantum computer, effectively breaking RSA, ECC, and Diffie-Hellman—the foundation 
-                of modern public-key cryptography.
-              </p>
-              <p>
-                <strong className="text-slate-900">Grover's Algorithm</strong> provides quadratic speedup for unstructured search, 
-                reducing the effective security of symmetric algorithms like AES-128 to 64-bit strength.
-              </p>
-              <p>
-                Current estimates suggest a cryptographically-relevant quantum computer (CRQC) capable of breaking 2048-bit RSA 
-                could emerge within 10-15 years. Organizations must begin migration to post-quantum cryptography now.
-              </p>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">How It Works</h2>
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">
-                  1
+              <div className="mt-4 space-y-4">
+                <div className="surface-2 rounded-xl p-4">
+                  <div className="text-xs text-slate-500">Threat model</div>
+                  <div className="mt-1 text-sm text-slate-800">
+                    <span className="font-mono">Harvest now, decrypt later</span> applies to long-retention data.
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">Community Research</h3>
-                  <p className="text-sm text-slate-600">
-                    Security researchers document cryptographic systems vulnerable to quantum attacks with detailed technical analysis.
-                  </p>
+
+                <div className="surface-2 rounded-xl p-4">
+                  <div className="text-xs text-slate-500">Classification</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-xs font-medium text-green-800">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      Quantum-safe
+                    </span>
+                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      At-risk
+                    </span>
+                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-xs font-medium text-red-800">
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                      Quantum-broken
+                    </span>
+                  </div>
+                </div>
+
+                <div className="surface-2 rounded-xl p-4">
+                  <div className="text-xs text-slate-500">PQC baseline</div>
+                  <div className="mt-1 text-sm text-slate-800">
+                    Prefer <span className="font-mono">CRYSTALS-Kyber</span> for KEM and <span className="font-mono">CRYSTALS-Dilithium</span> for signatures, with hybrid modes where applicable.
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">
-                  2
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">Expert Verification</h3>
-                  <p className="text-sm text-slate-600">
-                    Submissions undergo peer review to verify technical accuracy before publication to the public database.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">
-                  3
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">Public Access</h3>
-                  <p className="text-sm text-slate-600">
-                    Verified vulnerabilities are published with risk scores, affected protocols, and migration recommendations.
-                  </p>
-                </div>
+            </div>
+
+            <div className="mt-6 surface rounded-2xl p-6 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-900">Start here</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Browse verified entries, then submit systems you’ve evaluated. Include the current cryptography and a one-sentence weakness snapshot.
+              </p>
+              <div className="mt-4 flex gap-3">
+                <Link href="/dashboard">
+                  <Button variant="outline">View database</Button>
+                </Link>
+                <Link href="/submit">
+                  <Button variant="ghost">Submission form</Button>
+                </Link>
               </div>
             </div>
           </div>
         </div>
 
-        {/* CTA Section */}
-        <div className="bg-slate-900 rounded-lg p-12 text-center mb-16">
-          <h2 className="text-3xl font-bold text-white mb-4">Contribute to Quantum Security Research</h2>
-          <p className="text-slate-300 mb-8 max-w-2xl mx-auto">
-            Help document the scope of quantum vulnerabilities. Submit your findings to build a comprehensive resource 
-            for the cryptographic community.
-          </p>
-          <Link href="/submit">
-            <Button variant="secondary" size="lg">
-              Submit a Vulnerability
-            </Button>
-          </Link>
+        {/* Footer */}
+        <div className="mt-16 border-t border-slate-200 pt-8 text-sm text-slate-500">
+          Built for research workflows. Public submissions are reviewed and published via Directus.
         </div>
       </main>
-
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center space-x-3">
-              <Logo className="w-6 h-6 text-slate-600" />
-              <span className="text-sm text-slate-600">Quantum Vulnerability Database</span>
-            </div>
-            <div className="text-sm text-slate-500">
-              Open source research project • Community maintained
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
