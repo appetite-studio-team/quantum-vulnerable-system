@@ -41,26 +41,46 @@ export default function Home() {
           />
         </div>
 
+        {/* Desktop Layout: Image Left, Content Right */}
         <div className="pt-4 md:pt-12 lg:pt-16 pb-8 sm:pb-12">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">
-            Tracking Cryptographic Systems<br className="hidden sm:block" />
-            <span className="sm:hidden"> </span>Vulnerable to Quantum Attacks
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-3xl mb-6 sm:mb-8 leading-relaxed">
-            A community-maintained database tracking cryptographic systems vulnerable to quantum computing. 
-            The transition to post-quantum cryptography is critical.
-          </p>
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-12 sm:mb-16">
-            <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full sm:w-auto rounded-none">
-                Browse Database
-              </Button>
-            </Link>
-            <Link href="/submit" className="w-full sm:w-auto">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-none">
-                Submit Vulnerability
-              </Button>
-            </Link>
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {/* Image - Desktop Only */}
+            <div className="hidden md:block">
+              <div className="p-4 lg:p-6">
+                <Image
+                  src="/header-image.png"
+                  alt="Quantum Vulnerability Database"
+                  width={800}
+                  height={400}
+                  className="w-full h-auto object-cover rounded-none"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex flex-col justify-center md:pt-8">
+              <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">
+                Tracking Cryptographic Systems<br className="hidden sm:block" />
+                <span className="sm:hidden"> </span>Vulnerable to Quantum Attacks
+              </h1>
+              <p className="text-base sm:text-lg md:text-lg text-slate-600 mb-6 sm:mb-8 leading-relaxed">
+                A community-maintained database tracking cryptographic systems vulnerable to quantum computing. 
+                The transition to post-quantum cryptography is critical.
+              </p>
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-12 sm:mb-16">
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto rounded-none">
+                    Browse Database
+                  </Button>
+                </Link>
+                <Link href="/submit" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-none">
+                    Submit Vulnerability
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Key Metrics */}
