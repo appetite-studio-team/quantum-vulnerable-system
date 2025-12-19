@@ -29,7 +29,7 @@ export default function Navbar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-none text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-slate-100 text-slate-900'
                       : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
