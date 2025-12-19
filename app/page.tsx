@@ -32,12 +32,12 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-12 sm:mb-16">
             <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full sm:w-auto">
+              <Button variant="primary" size="lg" className="w-full sm:w-auto rounded-none">
                 Browse Database
               </Button>
             </Link>
             <Link href="/submit" className="w-full sm:w-auto">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-none">
                 Submit Vulnerability
               </Button>
             </Link>
@@ -128,7 +128,7 @@ export default function Home() {
             for the cryptographic community.
           </p>
           <Link href="/submit" className="inline-block">
-            <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+            <Button variant="secondary" size="lg" className="w-full sm:w-auto rounded-none">
               Submit a Vulnerability
             </Button>
           </Link>
