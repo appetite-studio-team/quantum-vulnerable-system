@@ -334,78 +334,64 @@ export default function DashboardPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-              {/* Risk Indicators */}
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                <div className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg ${
-                  selectedSystem.score >= 9 ? 'bg-red-600' :
-                  selectedSystem.score >= 7 ? 'bg-orange-600' :
-                  selectedSystem.score >= 5 ? 'bg-yellow-600' :
-                  'bg-green-600'
-                } text-white`}>
-                  <div className="text-xs font-medium mb-0.5 opacity-90">Risk Score</div>
-                  <div className="text-2xl sm:text-3xl font-bold">{selectedSystem.score}</div>
+            <div className="px-4 sm:px-6 py-6 sm:py-8">
+              {/* Risk Summary - Minimal Design */}
+              <div className="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-slate-200">
+                <div className="text-center">
+                  <div className="text-3xl sm:text-4xl font-bold text-slate-900 mb-1">{selectedSystem.score}</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wide">Risk Score</div>
                 </div>
-                <div className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg border ${
-                  selectedSystem.quantum_risk_level === 'quantum-broken' ? 'text-red-700 bg-red-50 border-red-200' :
-                  selectedSystem.quantum_risk_level === 'at-risk' ? 'text-yellow-700 bg-yellow-50 border-yellow-200' :
-                  'text-green-700 bg-green-50 border-green-200'
-                }`}>
-                  <div className="text-xs font-medium mb-0.5">Quantum Risk</div>
-                  <div className="text-xs sm:text-sm font-bold">
+                <div className="text-center border-x border-slate-200">
+                  <div className="text-sm sm:text-base font-semibold text-slate-900 mb-1">
                     {selectedSystem.quantum_risk_level === 'quantum-safe' ? 'Quantum-safe' :
-                     selectedSystem.quantum_risk_level === 'at-risk' ? 'At-risk (HNDL)' :
+                     selectedSystem.quantum_risk_level === 'at-risk' ? 'At-risk' :
                      'Quantum-broken'}
                   </div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wide">Quantum Risk</div>
                 </div>
-                <div className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg border ${
-                  selectedSystem.vulnerability_level === 'critical' ? 'text-red-700 bg-red-50 border-red-200' :
-                  selectedSystem.vulnerability_level === 'high' ? 'text-orange-700 bg-orange-50 border-orange-200' :
-                  selectedSystem.vulnerability_level === 'medium' ? 'text-yellow-700 bg-yellow-50 border-yellow-200' :
-                  'text-green-700 bg-green-50 border-green-200'
-                }`}>
-                  <div className="text-xs font-medium mb-0.5">Severity</div>
-                  <div className="text-xs sm:text-sm font-bold">{selectedSystem.vulnerability_level.toUpperCase()}</div>
+                <div className="text-center">
+                  <div className="text-sm sm:text-base font-semibold text-slate-900 mb-1">{selectedSystem.vulnerability_level.toUpperCase()}</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wide">Severity</div>
                 </div>
               </div>
 
               {/* System Info */}
               {(selectedSystem.system_category || selectedSystem.use_case) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 pb-8 border-b border-slate-200">
                   {selectedSystem.system_category && (
                     <div>
-                      <div className="text-xs text-slate-500 mb-1">System Category</div>
-                      <div className="text-sm font-medium text-slate-900">{selectedSystem.system_category}</div>
+                      <div className="text-xs text-slate-500 mb-2 uppercase tracking-wide">System Category</div>
+                      <div className="text-base font-medium text-slate-900">{selectedSystem.system_category}</div>
                     </div>
                   )}
                   {selectedSystem.use_case && (
                     <div>
-                      <div className="text-xs text-slate-500 mb-1">Use Case</div>
-                      <div className="text-sm font-medium text-slate-900">{selectedSystem.use_case}</div>
+                      <div className="text-xs text-slate-500 mb-2 uppercase tracking-wide">Use Case</div>
+                      <div className="text-base font-medium text-slate-900">{selectedSystem.use_case}</div>
                     </div>
                   )}
                 </div>
               )}
 
               {/* Weakness Reason */}
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-red-900 mb-2 uppercase tracking-wide">Weakness Snapshot</h3>
-                <p className="text-red-800 text-sm leading-relaxed">{selectedSystem.weakness_reason}</p>
+              <div className="mb-8 pb-8 border-b border-slate-200">
+                <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Weakness Snapshot</h3>
+                <p className="text-base text-slate-900 leading-relaxed">{selectedSystem.weakness_reason}</p>
               </div>
 
               {/* Description */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-2 uppercase tracking-wide">Technical Overview</h3>
-                <p className="text-slate-700 leading-relaxed">{selectedSystem.description}</p>
+              <div className="mb-8 pb-8 border-b border-slate-200">
+                <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Technical Overview</h3>
+                <p className="text-base text-slate-700 leading-relaxed">{selectedSystem.description}</p>
               </div>
 
               {/* Current Cryptography */}
               {selectedSystem.current_cryptography && selectedSystem.current_cryptography.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-2 sm:mb-3 uppercase tracking-wide">Current Cryptography</h3>
+                <div className="mb-8 pb-8 border-b border-slate-200">
+                  <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Current Cryptography</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedSystem.current_cryptography.map((crypto) => (
-                      <span key={crypto} className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-800 rounded-md text-xs sm:text-sm font-mono border border-slate-200">
+                      <span key={crypto} className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded border border-slate-200 text-sm font-mono">
                         {crypto}
                       </span>
                     ))}
@@ -414,11 +400,11 @@ export default function DashboardPage() {
               )}
 
               {/* Affected Protocols */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-2 sm:mb-3 uppercase tracking-wide">Affected Protocols</h3>
+              <div className="mb-8 pb-8 border-b border-slate-200">
+                <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Affected Protocols</h3>
                 <div className="flex flex-wrap gap-2">
                   {selectedSystem.affected_protocols.map((protocol) => (
-                    <span key={protocol} className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-blue-50 text-blue-800 rounded-md text-xs sm:text-sm font-medium border border-blue-100">
+                    <span key={protocol} className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded border border-slate-200 text-sm font-medium">
                       {protocol}
                     </span>
                   ))}
@@ -427,23 +413,23 @@ export default function DashboardPage() {
 
               {/* QuantumX Recommendation */}
               {selectedSystem.quantumx_recommendation && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-blue-900 mb-2 uppercase tracking-wide">QuantumX Recommendation</h3>
-                  <p className="text-blue-800 text-sm leading-relaxed whitespace-pre-line">{selectedSystem.quantumx_recommendation}</p>
+                <div className="mb-8 pb-8 border-b border-slate-200">
+                  <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">QuantumX Recommendation</h3>
+                  <p className="text-base text-slate-700 leading-relaxed whitespace-pre-line">{selectedSystem.quantumx_recommendation}</p>
                 </div>
               )}
 
               {/* Mitigation */}
               {selectedSystem.mitigation && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-green-900 mb-2 uppercase tracking-wide">Recommended Mitigation</h3>
-                  <p className="text-green-800 text-sm leading-relaxed">{selectedSystem.mitigation}</p>
+                <div className="mb-8 pb-8 border-b border-slate-200">
+                  <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Recommended Mitigation</h3>
+                  <p className="text-base text-slate-700 leading-relaxed">{selectedSystem.mitigation}</p>
                 </div>
               )}
 
               {/* Discovery Date */}
-              <div className="pt-4 border-t border-slate-200">
-                <div className="text-xs text-slate-500 mb-1">Discovered</div>
+              <div className="pt-2">
+                <div className="text-xs text-slate-500 mb-1 uppercase tracking-wide">Discovered</div>
                 <div className="text-sm font-medium text-slate-900">
                   {new Date(selectedSystem.discovered_date).toLocaleDateString('en-US', {
                     year: 'numeric',

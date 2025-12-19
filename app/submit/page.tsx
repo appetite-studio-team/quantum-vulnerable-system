@@ -239,7 +239,7 @@ export default function SubmitPage() {
                   step="0.1"
                   value={formData.score}
                   onChange={(e) => handleChange('score', parseFloat(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
