@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { VulnerableSystem } from '@/lib/data';
 import { fetchVulnerabilities } from '@/lib/directus';
+import Logo from '@/components/Logo';
 
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -442,6 +443,26 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />
+              <span className="text-xs sm:text-sm text-slate-600">Quantum Vulnerability Database</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              <span className="inline-block px-2.5 sm:px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full border border-blue-200">
+                Open Source Research Project
+              </span>
+              <span className="text-xs sm:text-sm text-slate-500 text-center md:text-left">
+                Community maintained
+              </span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

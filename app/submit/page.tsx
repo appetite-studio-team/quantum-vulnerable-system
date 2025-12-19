@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
-import { submitVulnerability } from '@/lib/directus';
+// import { submitVulnerability } from '@/lib/directus'; // Will connect API later
 
 export default function SubmitPage() {
   const [formData, setFormData] = useState({
@@ -32,85 +32,66 @@ export default function SubmitPage() {
     setIsSubmitting(true);
     setError(null);
 
-    // Convert comma-separated strings to arrays
-    const protocols = formData.affected_protocols
-      .split(',')
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
-
-    const cryptography = formData.current_cryptography
-      .split(',')
-      .map(c => c.trim())
-      .filter(c => c.length > 0);
-
-    const result = await submitVulnerability({
-      name: formData.name,
-      description: formData.description,
-      system_category: formData.system_category || undefined,
-      use_case: formData.use_case || undefined,
-      quantum_risk_level: formData.quantum_risk_level,
-      vulnerability_level: formData.vulnerability_level,
-      weakness_reason: formData.weakness_reason,
-      current_cryptography: cryptography,
-      affected_protocols: protocols,
-      organization: formData.organization,
-      quantumx_recommendation: formData.quantumx_recommendation || undefined,
-      mitigation: formData.mitigation || undefined,
-      score: formData.score,
-    });
+    // Mock submission - will connect API later
+    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
 
     setIsSubmitting(false);
 
-    if (result.success) {
-      setSubmitted(true);
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setSubmitted(false);
-        setFormData({
-          name: '',
-          description: '',
-          system_category: '',
-          use_case: '',
-          quantum_risk_level: 'at-risk',
-          vulnerability_level: 'medium',
-          weakness_reason: '',
-          current_cryptography: '',
-          affected_protocols: '',
-          organization: '',
-          quantumx_recommendation: '',
-          mitigation: '',
-          score: 5,
-        });
-      }, 3000);
-    } else {
-      setError(result.error || 'Failed to submit vulnerability');
-    }
+    // Mock successful submission
+    setSubmitted(true);
+    // Reset form
+    setFormData({
+      name: '',
+      description: '',
+      system_category: '',
+      use_case: '',
+      quantum_risk_level: 'at-risk',
+      vulnerability_level: 'medium',
+      weakness_reason: '',
+      current_cryptography: '',
+      affected_protocols: '',
+      organization: '',
+      quantumx_recommendation: '',
+      mitigation: '',
+      score: 5,
+    });
+    // Hide snackbar after 5 seconds
+    setTimeout(() => {
+      setSubmitted(false);
+    }, 5000);
   };
 
   const handleChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center border border-slate-200">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Submission Received</h2>
-          <p className="text-slate-600">
-            Your vulnerability report has been submitted for review. It will be published to the database after verification.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Snackbar Notification */}
+      {submitted && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-in-out">
+          <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-6 py-4 flex items-center gap-4 min-w-[320px] max-w-md">
+            <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-slate-900">Thank you!</p>
+              <p className="text-xs text-slate-600 mt-0.5">Your submission will be under review.</p>
+            </div>
+            <button
+              onClick={() => setSubmitted(false)}
+              className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-bold mb-3 text-slate-900">Submit Vulnerability</h1>

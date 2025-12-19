@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Logo from '@/components/Logo';
 import Button from '@/components/ui/Button';
 
@@ -15,19 +16,25 @@ export default function Home() {
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-12">
-          <div className="mb-3 sm:mb-4">
-            <span className="inline-block px-2.5 sm:px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full border border-blue-200">
-              Open Source Research Project
-            </span>
-          </div>
+        {/* Header Image - Mobile Only */}
+        <div className="md:hidden -mx-4 sm:-mx-6 mb-3">
+          <Image
+            src="/header-image.png"
+            alt="Quantum Vulnerability Database"
+            width={800}
+            height={400}
+            className="w-full h-auto object-cover"
+            priority
+          />
+        </div>
+
+        <div className="pt-4 md:pt-12 lg:pt-16 pb-8 sm:pb-12">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">
             Tracking Cryptographic Systems<br className="hidden sm:block" />
             <span className="sm:hidden"> </span>Vulnerable to Quantum Attacks
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-3xl mb-6 sm:mb-8 leading-relaxed">
-            A community-maintained database documenting cryptographic protocols and implementations at risk from quantum computing advances. 
-            Shor's algorithm threatens public-key cryptography. Grover's algorithm weakens symmetric systems. 
+            A community-maintained database tracking cryptographic systems vulnerable to quantum computing. 
             The transition to post-quantum cryptography is critical.
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-12 sm:mb-16">
@@ -142,8 +149,13 @@ export default function Home() {
               <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />
               <span className="text-xs sm:text-sm text-slate-600">Quantum Vulnerability Database</span>
             </div>
-            <div className="text-xs sm:text-sm text-slate-500 text-center md:text-left">
-              Open source research project • Community maintained
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              <span className="inline-block px-2.5 sm:px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full border border-blue-200">
+                Open Source Research Project
+              </span>
+              <span className="text-xs sm:text-sm text-slate-500 text-center md:text-left">
+                Community maintained
+              </span>
             </div>
           </div>
         </div>
