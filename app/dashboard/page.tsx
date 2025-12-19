@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { VulnerableSystem } from '@/lib/data';
 import { fetchVulnerabilities } from '@/lib/directus';
 import Logo from '@/components/Logo';
+import Button from '@/components/ui/Button';
 
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -303,6 +305,21 @@ export default function DashboardPage() {
             </div>
           </>
         )}
+      </div>
+
+      {/* Submit Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="bg-slate-900 rounded-lg p-6 sm:p-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Contribute to the Database</h2>
+          <p className="text-sm sm:text-base text-slate-300 mb-4 sm:mb-6 max-w-2xl mx-auto">
+            Found a vulnerability? Submit your findings to help build a comprehensive resource for the cryptographic community.
+          </p>
+          <Link href="/submit">
+            <Button variant="secondary" size="lg" className="rounded-none">
+              Submit a Vulnerability
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Modal */}
