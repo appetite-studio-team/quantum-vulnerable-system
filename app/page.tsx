@@ -43,18 +43,20 @@ export default function Home() {
 
         {/* Desktop Layout: Image Left, Content Right */}
         <div className="pt-4 md:pt-12 lg:pt-16 pb-8 sm:pb-12">
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start mb-8 md:mb-12">
             {/* Image - Desktop Only */}
             <div className="hidden md:block">
               <div className="p-4 lg:p-6">
-                <Image
-                  src="/header-image.png"
-                  alt="Quantum Vulnerability Database"
-                  width={800}
-                  height={400}
-                  className="w-full h-auto object-cover rounded-none"
-                  priority
-                />
+                <div className="aspect-[6/7] w-full overflow-hidden rounded-none">
+                  <Image
+                    src="/header-image.png"
+                    alt="Quantum Vulnerability Database"
+                    width={600}
+                    height={700}
+                    className="w-full h-full object-cover rounded-none"
+                    priority
+                  />
+                </div>
               </div>
             </div>
 
