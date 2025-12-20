@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { VulnerableSystem } from '@/lib/data';
-import { fetchVulnerabilities } from '@/lib/directus';
+import { VulnerableSystem, fetchVulnerabilities } from '@/lib/appwrite';
 import Logo from '@/components/Logo';
 import Button from '@/components/ui/Button';
 

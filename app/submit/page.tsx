@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
-// import { submitVulnerability } from '@/lib/directus'; // Will connect API later
+import { submitVulnerability } from '@/lib/appwrite';
 
 export default function SubmitPage() {
   const [formData, setFormData] = useState({
@@ -32,33 +32,50 @@ export default function SubmitPage() {
     setIsSubmitting(true);
     setError(null);
 
-    // Mock submission - will connect API later
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
+    // Submit to Appwrite
+    const result = await submitVulnerability({
+      name: formData.name,
+      description: formData.description,
+      system_category: formData.system_category,
+      use_case: formData.use_case,
+      quantum_risk_level: formData.quantum_risk_level,
+      vulnerability_level: formData.vulnerability_level,
+      weakness_reason: formData.weakness_reason,
+      current_cryptography: formData.current_cryptography.split(',').map(s => s.trim()).filter(Boolean),
+      affected_protocols: formData.affected_protocols.split(',').map(s => s.trim()).filter(Boolean),
+      organization: formData.organization,
+      quantumx_recommendation: formData.quantumx_recommendation,
+      mitigation: formData.mitigation,
+      score: formData.score,
+    });
 
     setIsSubmitting(false);
 
-    // Mock successful submission
-    setSubmitted(true);
-    // Reset form
-    setFormData({
-      name: '',
-      description: '',
-      system_category: '',
-      use_case: '',
-      quantum_risk_level: 'at-risk',
-      vulnerability_level: 'medium',
-      weakness_reason: '',
-      current_cryptography: '',
-      affected_protocols: '',
-      organization: '',
-      quantumx_recommendation: '',
-      mitigation: '',
-      score: 5,
-    });
-    // Hide snackbar after 5 seconds
-    setTimeout(() => {
-      setSubmitted(false);
-    }, 5000);
+    if (result.success) {
+      setSubmitted(true);
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        system_category: '',
+        use_case: '',
+        quantum_risk_level: 'at-risk',
+        vulnerability_level: 'medium',
+        weakness_reason: '',
+        current_cryptography: '',
+        affected_protocols: '',
+        organization: '',
+        quantumx_recommendation: '',
+        mitigation: '',
+        score: 5,
+      });
+      // Hide snackbar after 5 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 5000);
+    } else {
+      setError(result.error || 'Failed to submit vulnerability');
+    }
   };
 
   const handleChange = (field: string, value: string | number) => {
