@@ -1,5 +1,5 @@
-// Re-export types from Directus integration
-export type { VulnerableSystem } from './directus';
+// Re-export types from Appwrite integration
+export type { VulnerableSystem } from './appwrite';
 
 export function getVulnerabilityColor(level: 'critical' | 'high' | 'medium' | 'low') {
   const colors = {

@@ -1,16 +1,17 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { VulnerableSystem, fetchVulnerabilities } from '@/lib/appwrite';
+import Logo from '@/components/Logo';
 import Button from '@/components/ui/Button';
-import { VulnerableSystem } from '@/lib/data';
-import { fetchVulnerabilities } from '@/lib/directus';
 
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSystem, setSelectedSystem] = useState<VulnerableSystem | null>(null);
   const [systems, setSystems] = useState<VulnerableSystem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function loadData() {
@@ -27,385 +28,465 @@ export default function DashboardPage() {
     system.organization.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const toggleCard = (systemId: string) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(systemId)) {
+        newSet.delete(systemId);
+      } else {
+        newSet.add(systemId);
+      }
+      return newSet;
+    });
+  };
+
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Page header */}
-        <header className="surface rounded-2xl p-6 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Database</div>
-              <h1 className="mt-2 text-3xl font-semibold text-slate-900">Verified vulnerabilities</h1>
-              <p className="mt-2 text-sm text-slate-600 max-w-2xl">
-                Systems/assets exposed to Shor and Grover-class attacks—summarized for research, risk communication, and migration planning.
-              </p>
-            </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-slate-900">
+            Vulnerability Database
+          </h1>
+          <p className="text-slate-600 text-base sm:text-lg max-w-4xl">
+            Comprehensive documentation of cryptographic systems vulnerable to quantum computing. 
+            {!loading && `Currently tracking ${systems.length} verified vulnerabilities.`}
+          </p>
+        </div>
+      </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs text-slate-600">
-                <span className="w-2 h-2 rounded-full bg-slate-900" />
-                Verified only
-              </span>
-              {!loading && (
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-medium text-indigo-700">
-                  {systems.length} entries
-                </span>
-              )}
-            </div>
+      {/* Search */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="relative max-w-md">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by name, description, or organization..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
-        </header>
+        </div>
+      </div>
 
-        <div className="mt-6 grid lg:grid-cols-12 gap-6 items-start">
-          {/* Main table */}
-          <section className="lg:col-span-8">
-            <div className="surface rounded-2xl shadow-sm overflow-hidden">
-              {/* Search + legend */}
-              <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center gap-3 justify-between">
-                <div className="relative w-full md:max-w-md">
-                  <svg
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search systems, categories, orgs…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-2.5 border border-slate-300 rounded-xl bg-white/80 shadow-sm placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-300 outline-none transition-[box-shadow,border-color,background-color]"
-                  />
+      {/* Vulnerabilities Table/Cards */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block w-8 h-8 border-4 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="mt-4 text-slate-600">Loading vulnerabilities...</p>
+          </div>
+        ) : filteredSystems.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
+            <p className="text-slate-600">No vulnerabilities found matching your search.</p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block bg-white rounded-lg border border-slate-200 overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-slate-50 border-b border-slate-200">
+                <div className="col-span-3 text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  System / Asset
                 </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-xs font-medium text-green-800">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                    Quantum-safe
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    At-risk
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-xs font-medium text-red-800">
-                    <span className="w-2 h-2 rounded-full bg-red-500" />
-                    Quantum-broken
-                  </span>
+                <div className="col-span-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Risk Level
+                </div>
+                <div className="col-span-4 text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Weakness
+                </div>
+                <div className="col-span-3 text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Reason
                 </div>
               </div>
 
-              {/* Column header */}
-              <div className="px-4 py-3 bg-slate-50/70 border-b border-slate-200">
-                <div className="grid grid-cols-12 gap-4 text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                  <div className="col-span-3">System / Asset</div>
-                  <div className="col-span-2">Risk level</div>
-                  <div className="col-span-4">Weakness</div>
-                  <div className="col-span-3">Reason</div>
-                </div>
-              </div>
+              {/* Table Body */}
+              <div className="divide-y divide-slate-200">
+                {filteredSystems.map((system) => {
+                  const getRiskLevelColor = (level: string) => {
+                    if (level === 'quantum-safe') return 'bg-green-100 text-green-800 border-green-200';
+                    if (level === 'at-risk') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                    return 'bg-red-100 text-red-800 border-red-200';
+                  };
 
-              {/* Rows */}
-              {loading ? (
-                <div className="p-8 text-sm text-slate-600">Loading verified vulnerabilities…</div>
-              ) : filteredSystems.length === 0 ? (
-                <div className="p-8 text-sm text-slate-600">No entries match your search.</div>
-              ) : (
-                <div className="divide-y divide-slate-200">
-                  {filteredSystems.map((system) => {
-                    const riskLabel =
-                      system.quantum_risk_level === 'quantum-safe'
-                        ? 'Quantum-safe'
-                        : system.quantum_risk_level === 'at-risk'
-                          ? 'At-risk (HNDL)'
-                          : 'Quantum-broken';
+                  const getRiskLevelLabel = (level: string) => {
+                    if (level === 'quantum-safe') return 'Quantum-safe';
+                    if (level === 'at-risk') return 'At-risk (HNDL)';
+                    return 'Quantum-broken';
+                  };
 
-                    const riskPill =
-                      system.quantum_risk_level === 'quantum-safe'
-                        ? 'bg-green-50 border-green-200 text-green-800'
-                        : system.quantum_risk_level === 'at-risk'
-                          ? 'bg-amber-50 border-amber-200 text-amber-800'
-                          : 'bg-red-50 border-red-200 text-red-800';
+                  return (
+                    <div
+                      key={system.id}
+                      onClick={() => setSelectedSystem(system)}
+                      className="grid grid-cols-12 gap-4 px-6 py-5 hover:bg-slate-50 cursor-pointer transition-colors"
+                    >
+                      {/* System/Asset Column */}
+                      <div className="col-span-3">
+                        <h3 className="font-semibold text-slate-900 mb-1">{system.name}</h3>
+                        {system.system_category && (
+                          <span className="text-xs text-slate-600">{system.system_category}</span>
+                        )}
+                        {system.use_case && (
+                          <p className="text-xs text-slate-500 mt-1">{system.use_case}</p>
+                        )}
+                      </div>
 
-                    const riskDot =
-                      system.quantum_risk_level === 'quantum-safe'
-                        ? 'bg-green-500'
-                        : system.quantum_risk_level === 'at-risk'
-                          ? 'bg-amber-500'
-                          : 'bg-red-500';
-
-                    const riskStripe =
-                      system.quantum_risk_level === 'quantum-safe'
-                        ? 'border-l-green-500'
-                        : system.quantum_risk_level === 'at-risk'
-                          ? 'border-l-amber-500'
-                          : 'border-l-red-500';
-
-                    return (
-                      <div
-                        key={system.id}
-                        onClick={() => setSelectedSystem(system)}
-                        className={`grid grid-cols-12 gap-4 px-4 py-5 cursor-pointer transition-colors hover:bg-slate-50/70 border-l-4 ${riskStripe}`}
-                      >
-                        <div className="col-span-3 pr-2">
-                          <div className="text-sm font-semibold text-slate-900 leading-tight">{system.name}</div>
-                          {system.system_category && (
-                            <div className="mt-1 text-xs text-slate-600">{system.system_category}</div>
-                          )}
-                          {system.use_case && (
-                            <div className="mt-2 text-xs text-slate-500 line-clamp-2">{system.use_case}</div>
-                          )}
-                        </div>
-
-                        <div className="col-span-2">
-                          <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium ${riskPill}`}>
-                            <span className={`w-2 h-2 rounded-full ${riskDot}`} />
-                            {riskLabel}
-                          </span>
-                          <div className="mt-2 text-xs text-slate-600">
-                            Score <span className="font-mono text-slate-900">{system.score}</span>
+                      {/* Risk Level Column */}
+                      <div className="col-span-2">
+                        <span className={`inline-flex px-3 py-1 rounded-md text-xs font-semibold border ${
+                          getRiskLevelColor(system.quantum_risk_level)
+                        }`}>
+                          {getRiskLevelLabel(system.quantum_risk_level)}
+                        </span>
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                            system.score >= 9 ? 'bg-red-600' :
+                            system.score >= 7 ? 'bg-orange-600' :
+                            system.score >= 5 ? 'bg-yellow-600' :
+                            'bg-green-600'
+                          }`}>
+                            {system.score}
                           </div>
+                          <span className="text-xs text-slate-600">Risk Score</span>
+                        </div>
+                      </div>
+
+                      {/* Weakness Column */}
+                      <div className="col-span-4">
+                        <p className="text-sm text-slate-800 leading-relaxed">
+                          {system.weakness_reason}
+                        </p>
+                        {system.current_cryptography && system.current_cryptography.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {system.current_cryptography.slice(0, 3).map((crypto) => (
+                              <span key={crypto} className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-mono">
+                                {crypto}
+                              </span>
+                            ))}
+                            {system.current_cryptography.length > 3 && (
+                              <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
+                                +{system.current_cryptography.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Reason Column */}
+                      <div className="col-span-3">
+                        <p className="text-sm text-slate-700 line-clamp-3">
+                          {system.description}
+                        </p>
+                        <button className="text-xs text-blue-600 hover:text-blue-700 mt-2 font-medium">
+                          View details →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {filteredSystems.map((system) => {
+                const getRiskLevelColor = (level: string) => {
+                  if (level === 'quantum-safe') return 'bg-green-100 text-green-800 border-green-200';
+                  if (level === 'at-risk') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                  return 'bg-red-100 text-red-800 border-red-200';
+                };
+
+                const getRiskLevelLabel = (level: string) => {
+                  if (level === 'quantum-safe') return 'Quantum-safe';
+                  if (level === 'at-risk') return 'At-risk (HNDL)';
+                  return 'Quantum-broken';
+                };
+
+                const isExpanded = expandedCards.has(system.id);
+
+                return (
+                  <div
+                    key={system.id}
+                    className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm"
+                  >
+                    {/* Card Header - Always Visible */}
+                    <div
+                      onClick={() => toggleCard(system.id)}
+                      className="p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-slate-900 mb-1 text-base">{system.name}</h3>
+                          {system.system_category && (
+                            <span className="text-xs text-slate-600">{system.system_category}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${
+                            getRiskLevelColor(system.quantum_risk_level)
+                          }`}>
+                            {getRiskLevelLabel(system.quantum_risk_level)}
+                          </span>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                            system.score >= 9 ? 'bg-red-600' :
+                            system.score >= 7 ? 'bg-orange-600' :
+                            system.score >= 5 ? 'bg-yellow-600' :
+                            'bg-green-600'
+                          }`}>
+                            {system.score}
+                          </div>
+                          <svg
+                            className={`w-5 h-5 text-slate-400 transition-transform flex-shrink-0 ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Content */}
+                    {isExpanded && (
+                      <div className="border-t border-slate-200 p-4 space-y-4">
+                        {system.use_case && (
+                          <div>
+                            <div className="text-xs text-slate-500 mb-1">Use Case</div>
+                            <div className="text-sm text-slate-700">{system.use_case}</div>
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">Weakness</div>
+                          <p className="text-sm text-slate-800 leading-relaxed">{system.weakness_reason}</p>
                         </div>
 
-                        <div className="col-span-4">
-                          <div className="text-sm text-slate-800 leading-relaxed">{system.weakness_reason}</div>
-                          {system.current_cryptography?.length ? (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {system.current_cryptography.slice(0, 3).map((crypto) => (
-                                <span
-                                  key={crypto}
-                                  className="px-2 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs font-mono text-slate-700"
-                                >
+                        {system.current_cryptography && system.current_cryptography.length > 0 && (
+                          <div>
+                            <div className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">Cryptography</div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {system.current_cryptography.map((crypto) => (
+                                <span key={crypto} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">
                                   {crypto}
                                 </span>
                               ))}
-                              {system.current_cryptography.length > 3 && (
-                                <span className="px-2 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-600">
-                                  +{system.current_cryptography.length - 3}
-                                </span>
-                              )}
                             </div>
-                          ) : null}
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">Description</div>
+                          <p className="text-sm text-slate-700 leading-relaxed line-clamp-4">{system.description}</p>
                         </div>
 
-                        <div className="col-span-3">
-                          <div className="text-sm text-slate-700 leading-relaxed line-clamp-3">{system.description}</div>
-                          <div className="mt-2 text-xs font-medium text-indigo-700">Open detail →</div>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedSystem(system);
+                          }}
+                          className="w-full py-2.5 px-4 bg-blue-600 text-white rounded-none text-sm font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          View Full Details
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </section>
+          </>
+        )}
+      </div>
 
-          {/* Side notes */}
-          <aside className="lg:col-span-4 space-y-6">
-            <div className="surface rounded-2xl p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-slate-900">How to read this table</h2>
-              <ul className="mt-4 space-y-3 text-sm text-slate-600">
-                <li>
-                  <span className="font-medium text-slate-900">Quantum-broken</span> indicates Shor-affected public-key cryptography (RSA/ECC/DH).
-                </li>
-                <li>
-                  <span className="font-medium text-slate-900">At-risk</span> highlights long-retention systems vulnerable to “harvest now, decrypt later”.
-                </li>
-                <li>
-                  <span className="font-medium text-slate-900">Weakness snapshot</span> should be a single, falsifiable statement you can validate.
-                </li>
-              </ul>
-            </div>
-
-            <div className="surface rounded-2xl p-6 shadow-sm bg-gradient-to-br from-indigo-50/70 to-sky-50/70">
-              <h2 className="text-sm font-semibold text-slate-900">Submit a finding</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Add a new system with the current cryptography, a one-sentence weakness reason, and a migration recommendation.
-              </p>
-              <div className="mt-4">
-                <Link href="/submit">
-                  <Button>Open submission form</Button>
-                </Link>
-              </div>
-            </div>
-          </aside>
+      {/* Submit Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="bg-slate-900 rounded-lg p-6 sm:p-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Contribute to the Database</h2>
+          <p className="text-sm sm:text-base text-slate-300 mb-4 sm:mb-6 max-w-2xl mx-auto">
+            Found a vulnerability? Submit your findings to help build a comprehensive resource for the cryptographic community.
+          </p>
+          <Link href="/submit">
+            <Button variant="secondary" size="lg" className="rounded-none">
+              Submit a Vulnerability
+            </Button>
+          </Link>
         </div>
       </div>
 
       {/* Modal */}
       {selectedSystem && (
         <div
-          className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 sm:p-6 z-50"
           onClick={() => setSelectedSystem(null)}
         >
           <div
-            className="surface rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="sticky top-0 bg-white/90 backdrop-blur border-b border-slate-200 px-6 py-5">
-              <div className="flex items-start justify-between gap-6">
-                <div className="min-w-0">
-                  <h2 className="text-2xl font-semibold text-slate-900">{selectedSystem.name}</h2>
-                  <p className="mt-1 text-sm text-slate-600">{selectedSystem.organization}</p>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 sm:py-5">
+              <div className="flex justify-between items-start">
+                <div className="flex-1 pr-4 sm:pr-8 min-w-0">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1 break-words">{selectedSystem.name}</h2>
+                  <p className="text-sm sm:text-base text-slate-600">{selectedSystem.organization}</p>
                 </div>
                 <button
                   onClick={() => setSelectedSystem(null)}
-                  className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
                   aria-label="Close"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-medium">
-                  <span className="font-mono">{selectedSystem.score}</span>
-                  Score
-                </span>
-
-                <span
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium ${
-                    selectedSystem.quantum_risk_level === 'quantum-safe'
-                      ? 'bg-green-50 border-green-200 text-green-800'
-                      : selectedSystem.quantum_risk_level === 'at-risk'
-                        ? 'bg-amber-50 border-amber-200 text-amber-800'
-                        : 'bg-red-50 border-red-200 text-red-800'
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      selectedSystem.quantum_risk_level === 'quantum-safe'
-                        ? 'bg-green-500'
-                        : selectedSystem.quantum_risk_level === 'at-risk'
-                          ? 'bg-amber-500'
-                          : 'bg-red-500'
-                    }`}
-                  />
-                  {selectedSystem.quantum_risk_level === 'quantum-safe'
-                    ? 'Quantum-safe'
-                    : selectedSystem.quantum_risk_level === 'at-risk'
-                      ? 'At-risk (HNDL)'
-                      : 'Quantum-broken'}
-                </span>
-
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full border text-xs font-medium ${
-                    selectedSystem.vulnerability_level === 'critical'
-                      ? 'bg-red-50 border-red-200 text-red-800'
-                      : selectedSystem.vulnerability_level === 'high'
-                        ? 'bg-orange-50 border-orange-200 text-orange-800'
-                        : selectedSystem.vulnerability_level === 'medium'
-                          ? 'bg-amber-50 border-amber-200 text-amber-800'
-                          : 'bg-green-50 border-green-200 text-green-800'
-                  }`}
-                >
-                  {selectedSystem.vulnerability_level.toUpperCase()}
-                </span>
-
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-white border border-slate-200 text-xs text-slate-600">
-                  Status: {selectedSystem.status === 'under-review' ? 'Under Review' : selectedSystem.status}
-                </span>
-              </div>
             </div>
 
-            {/* Body */}
-            <div className="px-6 py-6 space-y-6">
+            {/* Modal Body */}
+            <div className="px-4 sm:px-6 py-6 sm:py-8">
+              {/* Risk Summary - Minimal Design */}
+              <div className="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-slate-200">
+                <div className="text-center">
+                  <div className="text-3xl sm:text-4xl font-bold text-slate-900 mb-1">{selectedSystem.score}</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wide">Risk Score</div>
+                </div>
+                <div className="text-center border-x border-slate-200">
+                  <div className="text-sm sm:text-base font-semibold text-slate-900 mb-1">
+                    {selectedSystem.quantum_risk_level === 'quantum-safe' ? 'Quantum-safe' :
+                     selectedSystem.quantum_risk_level === 'at-risk' ? 'At-risk' :
+                     'Quantum-broken'}
+                  </div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wide">Quantum Risk</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm sm:text-base font-semibold text-slate-900 mb-1">{selectedSystem.vulnerability_level.toUpperCase()}</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wide">Severity</div>
+                </div>
+              </div>
+
+              {/* System Info */}
               {(selectedSystem.system_category || selectedSystem.use_case) && (
-                <div className="surface-2 rounded-xl p-4 grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 pb-8 border-b border-slate-200">
                   {selectedSystem.system_category && (
                     <div>
-                      <div className="text-xs text-slate-500">System category</div>
-                      <div className="mt-1 text-sm font-medium text-slate-900">{selectedSystem.system_category}</div>
+                      <div className="text-xs text-slate-500 mb-2 uppercase tracking-wide">System Category</div>
+                      <div className="text-base font-medium text-slate-900">{selectedSystem.system_category}</div>
                     </div>
                   )}
                   {selectedSystem.use_case && (
                     <div>
-                      <div className="text-xs text-slate-500">Use case</div>
-                      <div className="mt-1 text-sm font-medium text-slate-900">{selectedSystem.use_case}</div>
+                      <div className="text-xs text-slate-500 mb-2 uppercase tracking-wide">Use Case</div>
+                      <div className="text-base font-medium text-slate-900">{selectedSystem.use_case}</div>
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="surface-2 rounded-xl p-4 border-l-4 border-red-400">
-                <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Weakness snapshot</div>
-                <p className="mt-2 text-sm text-slate-800 leading-relaxed">{selectedSystem.weakness_reason}</p>
+              {/* Weakness Reason */}
+              <div className="mb-8 pb-8 border-b border-slate-200">
+                <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Weakness Snapshot</h3>
+                <p className="text-base text-slate-900 leading-relaxed">{selectedSystem.weakness_reason}</p>
               </div>
 
-              <div className="surface-2 rounded-xl p-4">
-                <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Technical overview</div>
-                <p className="mt-2 text-sm text-slate-800 leading-relaxed">{selectedSystem.description}</p>
+              {/* Description */}
+              <div className="mb-8 pb-8 border-b border-slate-200">
+                <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Technical Overview</h3>
+                <p className="text-base text-slate-700 leading-relaxed">{selectedSystem.description}</p>
               </div>
 
-              {selectedSystem.current_cryptography?.length ? (
-                <div className="surface-2 rounded-xl p-4">
-                  <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Current cryptography</div>
-                  <div className="mt-3 flex flex-wrap gap-2">
+              {/* Current Cryptography */}
+              {selectedSystem.current_cryptography && selectedSystem.current_cryptography.length > 0 && (
+                <div className="mb-8 pb-8 border-b border-slate-200">
+                  <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Current Cryptography</h3>
+                  <div className="flex flex-wrap gap-2">
                     {selectedSystem.current_cryptography.map((crypto) => (
-                      <span
-                        key={crypto}
-                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800"
-                      >
+                      <span key={crypto} className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded border border-slate-200 text-sm font-mono">
                         {crypto}
                       </span>
                     ))}
                   </div>
                 </div>
-              ) : null}
+              )}
 
-              <div className="surface-2 rounded-xl p-4">
-                <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Affected protocols</div>
-                <div className="mt-3 flex flex-wrap gap-2">
+              {/* Affected Protocols */}
+              <div className="mb-8 pb-8 border-b border-slate-200">
+                <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Affected Protocols</h3>
+                <div className="flex flex-wrap gap-2">
                   {selectedSystem.affected_protocols.map((protocol) => (
-                    <span
-                      key={protocol}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800"
-                    >
+                    <span key={protocol} className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded border border-slate-200 text-sm font-medium">
                       {protocol}
                     </span>
                   ))}
                 </div>
               </div>
 
-              {selectedSystem.quantumx_recommendation ? (
-                <div className="surface-2 rounded-xl p-4 border-l-4 border-indigo-400">
-                  <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide">QuantumX recommendation</div>
-                  <p className="mt-2 text-sm text-slate-800 leading-relaxed whitespace-pre-line">
-                    {selectedSystem.quantumx_recommendation}
-                  </p>
+              {/* QuantumX Recommendation */}
+              {selectedSystem.quantumx_recommendation && (
+                <div className="mb-8 pb-8 border-b border-slate-200">
+                  <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">QuantumX Recommendation</h3>
+                  <p className="text-base text-slate-700 leading-relaxed whitespace-pre-line">{selectedSystem.quantumx_recommendation}</p>
                 </div>
-              ) : null}
+              )}
 
-              {selectedSystem.mitigation ? (
-                <div className="surface-2 rounded-xl p-4 border-l-4 border-green-400">
-                  <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Mitigation</div>
-                  <p className="mt-2 text-sm text-slate-800 leading-relaxed">{selectedSystem.mitigation}</p>
+              {/* Mitigation */}
+              {selectedSystem.mitigation && (
+                <div className="mb-8 pb-8 border-b border-slate-200">
+                  <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Recommended Mitigation</h3>
+                  <p className="text-base text-slate-700 leading-relaxed">{selectedSystem.mitigation}</p>
                 </div>
-              ) : null}
+              )}
 
-              <div className="border-t border-slate-200 pt-4 text-xs text-slate-500 flex items-center justify-between">
-                <span>
-                  Discovered{' '}
+              {/* Discovery Date */}
+              <div className="pt-2">
+                <div className="text-xs text-slate-500 mb-1 uppercase tracking-wide">Discovered</div>
+                <div className="text-sm font-medium text-slate-900">
                   {new Date(selectedSystem.discovered_date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric',
+                    day: 'numeric'
                   })}
-                </span>
-                <span className="font-mono">{selectedSystem.id}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />
+              <span className="text-xs sm:text-sm text-slate-600">Quantum Vulnerability Database</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              <span className="text-xs sm:text-sm text-slate-500 text-center md:text-left">
+                Community maintained
+              </span>
+              <a
+                href="https://github.com/appetite-studio-team/quantum-vulnerable-system"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors"
+                aria-label="GitHub Repository"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

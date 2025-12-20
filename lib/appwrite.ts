@@ -1,27 +1,28 @@
-import { createDirectus, rest, readItems, createItem } from '@directus/sdk';
+import { Client, Databases, Query, ID } from 'node-appwrite';
 
+// UI-friendly interface (same as before for compatibility)
 export interface VulnerableSystem {
   id: string;
-  name: string; // System/Asset name (e.g., "Digital Identity", "Banking Systems")
-  description: string; // Detailed technical description
+  name: string;
+  description: string;
   
   // Categorization
-  system_category?: string; // e.g., "Banking", "Healthcare", "IoT", "Cloud", "Satellite"
-  use_case?: string; // e.g., "Authentication", "Secure transactions", "Long-term data protection"
+  system_category?: string;
+  use_case?: string;
   
   // Risk Assessment
   quantum_risk_level: 'quantum-safe' | 'at-risk' | 'quantum-broken';
   vulnerability_level: 'critical' | 'high' | 'medium' | 'low';
   score: number;
-  weakness_reason: string; // Short snapshot of why system is exposed
+  weakness_reason: string;
   
   // Cryptography Details
-  current_cryptography: string[]; // e.g., ["RSA-2048", "ECC (P-256)", "AES-128"]
+  current_cryptography: string[];
   affected_protocols: string[];
   
   // Recommendations
-  quantumx_recommendation?: string; // PQC migration recommendations
-  mitigation?: string; // General mitigation strategies
+  quantumx_recommendation?: string;
+  mitigation?: string;
   
   // Metadata
   discovered_date: string;
@@ -29,16 +30,37 @@ export interface VulnerableSystem {
   status: 'verified' | 'pending' | 'under-review';
 }
 
-interface DirectusSchema {
-  vulnerable_systems: VulnerableSystem[];
+// Appwrite document structure (with their field naming)
+interface AppwriteDocument {
+  $id: string;
+  $createdAt: string;
+  'Asset-Name': string;
+  'System-Category': string;
+  'Use-Case': string;
+  'Organization': string;
+  'Weakness-Reason': string;
+  'Detailed-Technical-Description': string;
+  'Current-Cryptography': string;
+  'Affected-Protocols': string;
+  'Quantum-Risk-Level': string;
+  'Vulnerability-Severity': string;
+  'Risk-Score': number;
+  'QuantumX-Recommendation': string;
+  'Recommended-Mitigation': string;
+  'entry-status': 'Pending' | 'In-review' | 'Published';
 }
 
-const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8055';
+// Initialize Appwrite client
+const client = new Client()
+  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || '')
+  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '');
 
-// Create Directus client
-const client = createDirectus<DirectusSchema>(directusUrl).with(rest());
+const databases = new Databases(client);
 
-// Dummy data for development/demo purposes
+const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || '';
+const COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID || '';
+
+// Dummy data for development/demo purposes (same as before)
 const dummyData: VulnerableSystem[] = [
   {
     id: '1',
@@ -151,24 +173,84 @@ const dummyData: VulnerableSystem[] = [
 ];
 
 /**
+ * Transform Appwrite document to UI-friendly VulnerableSystem format
+ */
+function transformFromAppwrite(doc: AppwriteDocument): VulnerableSystem {
+  // Map Appwrite status to UI status
+  let status: 'verified' | 'pending' | 'under-review';
+  if (doc['entry-status'] === 'Published') {
+    status = 'verified';
+  } else if (doc['entry-status'] === 'In-review') {
+    status = 'under-review';
+  } else {
+    status = 'pending';
+  }
+
+  return {
+    id: doc.$id,
+    name: doc['Asset-Name'],
+    description: doc['Detailed-Technical-Description'],
+    system_category: doc['System-Category'],
+    use_case: doc['Use-Case'],
+    quantum_risk_level: doc['Quantum-Risk-Level'] as 'quantum-safe' | 'at-risk' | 'quantum-broken',
+    vulnerability_level: doc['Vulnerability-Severity'] as 'critical' | 'high' | 'medium' | 'low',
+    score: doc['Risk-Score'],
+    weakness_reason: doc['Weakness-Reason'],
+    current_cryptography: doc['Current-Cryptography'] 
+      ? doc['Current-Cryptography'].split(',').map(s => s.trim()) 
+      : [],
+    affected_protocols: doc['Affected-Protocols'] 
+      ? doc['Affected-Protocols'].split(',').map(s => s.trim()) 
+      : [],
+    quantumx_recommendation: doc['QuantumX-Recommendation'],
+    mitigation: doc['Recommended-Mitigation'],
+    discovered_date: doc.$createdAt,
+    organization: doc['Organization'],
+    status,
+  };
+}
+
+/**
+ * Transform VulnerableSystem to Appwrite document format
+ */
+function transformToAppwrite(
+  data: Omit<VulnerableSystem, 'id' | 'status' | 'discovered_date'>
+): Omit<AppwriteDocument, '$id' | '$createdAt' | 'entry-status'> {
+  return {
+    'Asset-Name': data.name,
+    'Detailed-Technical-Description': data.description,
+    'System-Category': data.system_category || '',
+    'Use-Case': data.use_case || '',
+    'Quantum-Risk-Level': data.quantum_risk_level,
+    'Vulnerability-Severity': data.vulnerability_level,
+    'Risk-Score': data.score,
+    'Weakness-Reason': data.weakness_reason,
+    'Current-Cryptography': data.current_cryptography.join(', '),
+    'Affected-Protocols': data.affected_protocols.join(', '),
+    'QuantumX-Recommendation': data.quantumx_recommendation || '',
+    'Recommended-Mitigation': data.mitigation || '',
+    'Organization': data.organization,
+  };
+}
+
+/**
  * Fetch all published (verified) vulnerabilities
  */
 export async function fetchVulnerabilities(): Promise<VulnerableSystem[]> {
   try {
-    const items = await client.request(
-      readItems('vulnerable_systems', {
-        filter: {
-          status: {
-            _eq: 'verified'
-          }
-        },
-        sort: ['-score', '-discovered_date']
-      })
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTION_ID,
+      [
+        Query.equal('entry-status', 'Published'),
+        Query.orderDesc('Risk-Score'),
+        Query.orderDesc('$createdAt')
+      ]
     );
-    return items;
+    
+    return response.documents.map(doc => transformFromAppwrite(doc as unknown as AppwriteDocument));
   } catch (error) {
-    console.warn('Directus not available, using dummy data:', error);
-    // Return dummy data when Directus is not available
+    console.warn('Appwrite not available, using dummy data:', error);
     return dummyData;
   }
 }
@@ -180,13 +262,18 @@ export async function submitVulnerability(
   data: Omit<VulnerableSystem, 'id' | 'status' | 'discovered_date'>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await client.request(
-      createItem('vulnerable_systems', {
-        ...data,
-        status: 'pending',
-        discovered_date: new Date().toISOString()
-      })
+    const appwriteData = transformToAppwrite(data);
+    
+    await databases.createDocument(
+      DATABASE_ID,
+      COLLECTION_ID,
+      ID.unique(),
+      {
+        ...appwriteData,
+        'entry-status': 'Pending'
+      }
     );
+    
     return { success: true };
   } catch (error) {
     console.error('Error submitting vulnerability:', error);
