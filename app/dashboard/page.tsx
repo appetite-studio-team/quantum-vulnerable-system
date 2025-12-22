@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { VulnerableSystem, fetchVulnerabilities } from '@/lib/appwrite';
+import { VulnerableSystem, fetchVulnerabilities } from '@/lib/client-api';
 import Logo from '@/components/Logo';
 import Button from '@/components/ui/Button';
 
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                         </p>
                         {system.current_cryptography && system.current_cryptography.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            {system.current_cryptography.slice(0, 3).map((crypto) => (
+                            {system.current_cryptography.slice(0, 3).map((crypto: string) => (
                               <span key={crypto} className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-mono">
                                 {crypto}
                               </span>
@@ -273,7 +273,7 @@ export default function DashboardPage() {
                           <div>
                             <div className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">Cryptography</div>
                             <div className="flex flex-wrap gap-1.5">
-                              {system.current_cryptography.map((crypto) => (
+                              {system.current_cryptography.map((crypto: string) => (
                                 <span key={crypto} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">
                                   {crypto}
                                 </span>
@@ -407,7 +407,7 @@ export default function DashboardPage() {
                 <div className="mb-8 pb-8 border-b border-slate-200">
                   <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Current Cryptography</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedSystem.current_cryptography.map((crypto) => (
+                    {selectedSystem.current_cryptography.map((crypto: string) => (
                       <span key={crypto} className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded border border-slate-200 text-sm font-mono">
                         {crypto}
                       </span>
@@ -420,7 +420,7 @@ export default function DashboardPage() {
               <div className="mb-8 pb-8 border-b border-slate-200">
                 <h3 className="text-xs text-slate-500 mb-3 uppercase tracking-wide font-medium">Affected Protocols</h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectedSystem.affected_protocols.map((protocol) => (
+                  {selectedSystem.affected_protocols.map((protocol: string) => (
                     <span key={protocol} className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded border border-slate-200 text-sm font-medium">
                       {protocol}
                     </span>

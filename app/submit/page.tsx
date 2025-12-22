@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
-import { submitVulnerability } from '@/lib/appwrite';
+import { submitVulnerability } from '@/lib/client-api';
 
 export default function SubmitPage() {
   const [formData, setFormData] = useState({
@@ -32,20 +32,30 @@ export default function SubmitPage() {
     setIsSubmitting(true);
     setError(null);
 
-    // Submit to Appwrite
+    // Convert comma-separated strings to arrays
+    const protocols = formData.affected_protocols
+      .split(',')
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+
+    const cryptography = formData.current_cryptography
+      .split(',')
+      .map(c => c.trim())
+      .filter(c => c.length > 0);
+
     const result = await submitVulnerability({
       name: formData.name,
       description: formData.description,
-      system_category: formData.system_category,
-      use_case: formData.use_case,
+      system_category: formData.system_category || undefined,
+      use_case: formData.use_case || undefined,
       quantum_risk_level: formData.quantum_risk_level,
       vulnerability_level: formData.vulnerability_level,
       weakness_reason: formData.weakness_reason,
-      current_cryptography: formData.current_cryptography.split(',').map(s => s.trim()).filter(Boolean),
-      affected_protocols: formData.affected_protocols.split(',').map(s => s.trim()).filter(Boolean),
+      current_cryptography: cryptography,
+      affected_protocols: protocols,
       organization: formData.organization,
-      quantumx_recommendation: formData.quantumx_recommendation,
-      mitigation: formData.mitigation,
+      quantumx_recommendation: formData.quantumx_recommendation || undefined,
+      mitigation: formData.mitigation || undefined,
       score: formData.score,
     });
 
@@ -235,8 +245,11 @@ export default function SubmitPage() {
                   min="0"
                   max="10"
                   step="0.1"
-                  value={formData.score}
-                  onChange={(e) => handleChange('score', parseFloat(e.target.value))}
+                  value={isNaN(formData.score) ? '' : formData.score}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? 5 : parseFloat(e.target.value);
+                    handleChange('score', isNaN(val) ? 5 : val);
+                  }}
                   className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
