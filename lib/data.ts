@@ -1,5 +1,5 @@
-// Re-export types from Appwrite integration
-export type { VulnerableSystem } from './appwrite';
+// Re-export types
+export type { VulnerableSystem } from './types';
 
 export function getVulnerabilityColor(level: 'critical' | 'high' | 'medium' | 'low') {
   const colors = {

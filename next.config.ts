@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
 
   // Enable compression
   compress: true,
+
+  // Turbopack configuration (Next.js 16 uses Turbopack by default)
+  turbopack: {},
 };
 
 export default nextConfig;

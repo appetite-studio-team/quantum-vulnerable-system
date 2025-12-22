@@ -1,48 +1,12 @@
-import { Client, Databases, Query, ID } from 'node-appwrite';
+// Client-side API functions (for use in client components)
+// These will call API routes or be mocked until backend is connected
+
 import type { VulnerableSystem } from './types';
 
-// Re-export type for compatibility
+// Re-export type for use in client components
 export type { VulnerableSystem } from './types';
 
-// Appwrite document structure (with their field naming)
-interface AppwriteDocument {
-  $id: string;
-  $createdAt: string;
-  'Asset-Name': string;
-  'System-Category': string;
-  'Use-Case': string;
-  'Organization': string;
-  'Weakness-Reason': string;
-  'Detailed-Technical-Description': string;
-  'Current-Cryptography': string;
-  'Affected-Protocols': string;
-  'Quantum-Risk-Level': string;
-  'Vulnerability-Severity': string;
-  'Risk-Score': number;
-  'QuantumX-Recommendation': string;
-  'Recommended-Mitigation': string;
-  'entry-status': 'Pending' | 'In-review' | 'Published';
-}
-
-// Initialize Appwrite client
-// For server-side operations, we need an API key (not exposed to client)
-// API key should have appropriate scopes: databases.read, databases.write
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || '')
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '');
-
-// Set API key for server-side authentication (if provided)
-// This should be a server-only environment variable (not NEXT_PUBLIC_)
-if (process.env.APPWRITE_API_KEY) {
-  client.setKey(process.env.APPWRITE_API_KEY);
-}
-
-const databases = new Databases(client);
-
-const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || '';
-const COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID || '';
-
-// Dummy data for development/demo purposes (same as before)
+// Dummy data for development/demo purposes
 const dummyData: VulnerableSystem[] = [
   {
     id: '1',
@@ -155,108 +119,55 @@ const dummyData: VulnerableSystem[] = [
 ];
 
 /**
- * Transform Appwrite document to UI-friendly VulnerableSystem format
- */
-function transformFromAppwrite(doc: AppwriteDocument): VulnerableSystem {
-  // Map Appwrite status to UI status
-  let status: 'verified' | 'pending' | 'under-review';
-  if (doc['entry-status'] === 'Published') {
-    status = 'verified';
-  } else if (doc['entry-status'] === 'In-review') {
-    status = 'under-review';
-  } else {
-    status = 'pending';
-  }
-
-  return {
-    id: doc.$id,
-    name: doc['Asset-Name'],
-    description: doc['Detailed-Technical-Description'],
-    system_category: doc['System-Category'],
-    use_case: doc['Use-Case'],
-    quantum_risk_level: doc['Quantum-Risk-Level'] as 'quantum-safe' | 'at-risk' | 'quantum-broken',
-    vulnerability_level: doc['Vulnerability-Severity'] as 'critical' | 'high' | 'medium' | 'low',
-    score: doc['Risk-Score'],
-    weakness_reason: doc['Weakness-Reason'],
-    current_cryptography: doc['Current-Cryptography'] 
-      ? doc['Current-Cryptography'].split(',').map(s => s.trim()) 
-      : [],
-    affected_protocols: doc['Affected-Protocols'] 
-      ? doc['Affected-Protocols'].split(',').map(s => s.trim()) 
-      : [],
-    quantumx_recommendation: doc['QuantumX-Recommendation'],
-    mitigation: doc['Recommended-Mitigation'],
-    discovered_date: doc.$createdAt,
-    organization: doc['Organization'],
-    status,
-  };
-}
-
-/**
- * Transform VulnerableSystem to Appwrite document format
- */
-function transformToAppwrite(
-  data: Omit<VulnerableSystem, 'id' | 'status' | 'discovered_date'>
-): Omit<AppwriteDocument, '$id' | '$createdAt' | 'entry-status'> {
-  return {
-    'Asset-Name': data.name,
-    'Detailed-Technical-Description': data.description,
-    'System-Category': data.system_category || '',
-    'Use-Case': data.use_case || '',
-    'Quantum-Risk-Level': data.quantum_risk_level,
-    'Vulnerability-Severity': data.vulnerability_level,
-    'Risk-Score': Math.round(data.score), // Ensure integer as per Appwrite schema
-    'Weakness-Reason': data.weakness_reason,
-    'Current-Cryptography': data.current_cryptography.join(', '),
-    'Affected-Protocols': data.affected_protocols.join(', '),
-    'QuantumX-Recommendation': data.quantumx_recommendation || '',
-    'Recommended-Mitigation': data.mitigation || '',
-    'Organization': data.organization,
-  };
-}
-
-/**
  * Fetch all published (verified) vulnerabilities
  */
 export async function fetchVulnerabilities(): Promise<VulnerableSystem[]> {
   try {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      COLLECTION_ID,
-      [
-        Query.equal('entry-status', 'Published'),
-        Query.orderDesc('Risk-Score'),
-        Query.orderDesc('$createdAt')
-      ]
-    );
-    
-    return response.documents.map(doc => transformFromAppwrite(doc as unknown as AppwriteDocument));
+    const response = await fetch('/api/vulnerabilities', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn('Failed to fetch vulnerabilities, using dummy data');
+      return dummyData;
+    }
+
+    const result = await response.json();
+    return result.data || dummyData;
   } catch (error) {
-    console.warn('Appwrite not available, using dummy data:', error);
+    console.warn('Error fetching vulnerabilities, using dummy data:', error);
     return dummyData;
   }
 }
 
 /**
- * Submit a new vulnerability (will be pending by default)
+ * Submit a new vulnerability
  */
 export async function submitVulnerability(
   data: Omit<VulnerableSystem, 'id' | 'status' | 'discovered_date'>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const appwriteData = transformToAppwrite(data);
+    const response = await fetch('/api/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
     
-    await databases.createDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      ID.unique(),
-      {
-        ...appwriteData,
-        'entry-status': 'Pending'
-      }
-    );
-    
-    return { success: true };
+    if (!response.ok) {
+      return {
+        success: false,
+        error: result.error || 'Failed to submit vulnerability'
+      };
+    }
+
+    return result;
   } catch (error) {
     console.error('Error submitting vulnerability:', error);
     return {
@@ -265,3 +176,4 @@ export async function submitVulnerability(
     };
   }
 }
+
