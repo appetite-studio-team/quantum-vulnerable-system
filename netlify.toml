@@ -1,0 +1,15 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Configure secrets scanning to ignore NEXT_PUBLIC_* variables
+  # These are intentionally public and embedded in the client bundle by Next.js
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_APPWRITE_ENDPOINT,NEXT_PUBLIC_APPWRITE_PROJECT_ID,NEXT_PUBLIC_APPWRITE_DATABASE_ID,NEXT_PUBLIC_APPWRITE_COLLECTION_ID"
+
+# Headers for static assets
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
