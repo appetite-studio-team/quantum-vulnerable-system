@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { submitVulnerability } from '@/lib/appwrite';
 import type { VulnerableSystem } from '@/lib/types';
 
+// Force dynamic rendering - don't pre-render at build time
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

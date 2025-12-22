@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { fetchVulnerabilities } from '@/lib/appwrite';
 
+// Force dynamic rendering - don't pre-render at build time
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const vulnerabilities = await fetchVulnerabilities();

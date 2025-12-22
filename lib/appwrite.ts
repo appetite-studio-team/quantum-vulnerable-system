@@ -24,20 +24,31 @@ interface AppwriteDocument {
   'entry-status': 'Pending' | 'In-review' | 'Published';
 }
 
-// Initialize Appwrite client
-// For server-side operations, we need an API key (not exposed to client)
-// API key should have appropriate scopes: databases.read, databases.write
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || '')
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '');
+// Lazy initialization of Appwrite client to avoid build-time errors
+// Initialize only when actually needed (during API calls, not at module load)
+function getAppwriteClient() {
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+  
+  if (!endpoint || !projectId) {
+    throw new Error('Appwrite configuration missing: NEXT_PUBLIC_APPWRITE_ENDPOINT and NEXT_PUBLIC_APPWRITE_PROJECT_ID are required');
+  }
 
-// Set API key for server-side authentication (if provided)
-// This should be a server-only environment variable (not NEXT_PUBLIC_)
-if (process.env.APPWRITE_API_KEY) {
-  client.setKey(process.env.APPWRITE_API_KEY);
+  const client = new Client()
+    .setEndpoint(endpoint)
+    .setProject(projectId);
+
+  // Set API key for server-side authentication (if provided)
+  if (process.env.APPWRITE_API_KEY) {
+    client.setKey(process.env.APPWRITE_API_KEY);
+  }
+
+  return client;
 }
 
-const databases = new Databases(client);
+function getDatabases() {
+  return new Databases(getAppwriteClient());
+}
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || '';
 const COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID || '';
@@ -220,6 +231,13 @@ function transformToAppwrite(
  */
 export async function fetchVulnerabilities(): Promise<VulnerableSystem[]> {
   try {
+    // Only initialize Appwrite client when actually needed (not at build time)
+    if (!DATABASE_ID || !COLLECTION_ID) {
+      console.warn('Appwrite configuration missing, using dummy data');
+      return dummyData;
+    }
+
+    const databases = getDatabases();
     const response = await databases.listDocuments(
       DATABASE_ID,
       COLLECTION_ID,
@@ -244,6 +262,15 @@ export async function submitVulnerability(
   data: Omit<VulnerableSystem, 'id' | 'status' | 'discovered_date'>
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Only initialize Appwrite client when actually needed (not at build time)
+    if (!DATABASE_ID || !COLLECTION_ID) {
+      return {
+        success: false,
+        error: 'Appwrite configuration missing'
+      };
+    }
+
+    const databases = getDatabases();
     const appwriteData = transformToAppwrite(data);
     
     await databases.createDocument(
