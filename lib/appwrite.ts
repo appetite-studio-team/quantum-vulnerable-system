@@ -312,30 +312,6 @@ export async function submitVulnerability(
 }
 
 /**
- * Fetch a specific vulnerability by ID (admin)
- */
-export async function fetchVulnerabilityById(id: string): Promise<VulnerableSystem | null> {
-  try {
-    if (!DATABASE_ID || !COLLECTION_ID) {
-      console.warn('Appwrite configuration missing');
-      return null;
-    }
-
-    const databases = getDatabases();
-    const doc = await databases.getDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      id
-    );
-    
-    return transformFromAppwrite(doc as unknown as AppwriteDocument);
-  } catch (error) {
-    console.error(`Error fetching vulnerability ${id}:`, error);
-    return null;
-  }
-}
-
-/**
  * Fetch all vulnerabilities (admin - includes all statuses)
  */
 export async function fetchAllVulnerabilities(): Promise<VulnerableSystem[]> {
