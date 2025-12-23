@@ -292,3 +292,241 @@ export async function submitVulnerability(
     };
   }
 }
+
+/**
+ * Fetch all vulnerabilities (admin - includes all statuses)
+ */
+export async function fetchAllVulnerabilities(): Promise<VulnerableSystem[]> {
+  try {
+    if (!DATABASE_ID || !COLLECTION_ID) {
+      console.warn('Appwrite configuration missing, using dummy data');
+      return dummyData;
+    }
+
+    const databases = getDatabases();
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTION_ID,
+      [
+        Query.orderDesc('Risk-Score'),
+        Query.orderDesc('$createdAt')
+      ]
+    );
+    
+    return response.documents.map(doc => transformFromAppwrite(doc as unknown as AppwriteDocument));
+  } catch (error) {
+    console.warn('Appwrite not available, using dummy data:', error);
+    return dummyData;
+  }
+}
+
+/**
+ * Create a new vulnerability entry (admin)
+ */
+export async function createVulnerability(
+  data: Omit<VulnerableSystem, 'id' | 'discovered_date' | 'status'> & { status?: 'Pending' | 'In-review' | 'Published' | 'verified' | 'pending' | 'under-review' }
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    if (!DATABASE_ID || !COLLECTION_ID) {
+      return {
+        success: false,
+        error: 'Appwrite configuration missing'
+      };
+    }
+
+    const databases = getDatabases();
+    const status = data.status;
+    const vulnerabilityData: Omit<VulnerableSystem, 'id' | 'status' | 'discovered_date'> = {
+      name: data.name,
+      description: data.description,
+      system_category: data.system_category,
+      use_case: data.use_case,
+      quantum_risk_level: data.quantum_risk_level,
+      vulnerability_level: data.vulnerability_level,
+      score: data.score,
+      weakness_reason: data.weakness_reason,
+      current_cryptography: data.current_cryptography,
+      affected_protocols: data.affected_protocols,
+      quantumx_recommendation: data.quantumx_recommendation,
+      mitigation: data.mitigation,
+      organization: data.organization,
+    };
+    
+    // Map UI status to Appwrite status
+    let entryStatus: 'Pending' | 'In-review' | 'Published' = 'Pending';
+    if (status === 'verified') {
+      entryStatus = 'Published';
+    } else if (status === 'under-review') {
+      entryStatus = 'In-review';
+    } else if (status === 'pending') {
+      entryStatus = 'Pending';
+    } else if (status) {
+      entryStatus = status;
+    }
+
+    const appwriteData = transformToAppwrite(vulnerabilityData);
+    const documentId = ID.unique();
+    
+    await databases.createDocument(
+      DATABASE_ID,
+      COLLECTION_ID,
+      documentId,
+      {
+        ...appwriteData,
+        'entry-status': entryStatus
+      }
+    );
+    
+    return { success: true, id: documentId };
+  } catch (error) {
+    console.error('Error creating vulnerability:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create vulnerability'
+    };
+  }
+}
+
+/**
+ * Update a vulnerability entry (admin)
+ */
+export async function updateVulnerability(
+  id: string,
+  data: Partial<Omit<VulnerableSystem, 'id' | 'discovered_date'>> & { status?: 'Pending' | 'In-review' | 'Published' | 'verified' | 'pending' | 'under-review' }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!DATABASE_ID || !COLLECTION_ID) {
+      return {
+        success: false,
+        error: 'Appwrite configuration missing'
+      };
+    }
+
+    const databases = getDatabases();
+    const { status, ...updateData } = data;
+    
+    const updatePayload: any = {};
+    
+    // Transform fields if provided
+    if (updateData.name) updatePayload['Asset-Name'] = updateData.name;
+    if (updateData.description) updatePayload['Detailed-Technical-Description'] = updateData.description;
+    if (updateData.system_category) updatePayload['System-Category'] = updateData.system_category;
+    if (updateData.use_case) updatePayload['Use-Case'] = updateData.use_case;
+    if (updateData.quantum_risk_level) updatePayload['Quantum-Risk-Level'] = updateData.quantum_risk_level;
+    if (updateData.vulnerability_level) updatePayload['Vulnerability-Severity'] = updateData.vulnerability_level;
+    if (updateData.score !== undefined) updatePayload['Risk-Score'] = Math.round(updateData.score);
+    if (updateData.weakness_reason) updatePayload['Weakness-Reason'] = updateData.weakness_reason;
+    if (updateData.current_cryptography) updatePayload['Current-Cryptography'] = Array.isArray(updateData.current_cryptography) 
+      ? updateData.current_cryptography.join(', ') 
+      : updateData.current_cryptography;
+    if (updateData.affected_protocols) updatePayload['Affected-Protocols'] = Array.isArray(updateData.affected_protocols)
+      ? updateData.affected_protocols.join(', ')
+      : updateData.affected_protocols;
+    if (updateData.quantumx_recommendation) updatePayload['QuantumX-Recommendation'] = updateData.quantumx_recommendation;
+    if (updateData.mitigation) updatePayload['Recommended-Mitigation'] = updateData.mitigation;
+    if (updateData.organization) updatePayload['Organization'] = updateData.organization;
+    
+    // Handle status update
+    if (status) {
+      let entryStatus: 'Pending' | 'In-review' | 'Published';
+      if (status === 'verified') {
+        entryStatus = 'Published';
+      } else if (status === 'under-review') {
+        entryStatus = 'In-review';
+      } else if (status === 'pending') {
+        entryStatus = 'Pending';
+      } else {
+        entryStatus = status as 'Pending' | 'In-review' | 'Published';
+      }
+      updatePayload['entry-status'] = entryStatus;
+    }
+    
+    await databases.updateDocument(
+      DATABASE_ID,
+      COLLECTION_ID,
+      id,
+      updatePayload
+    );
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating vulnerability:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update vulnerability'
+    };
+  }
+}
+
+/**
+ * Delete a vulnerability entry (admin)
+ */
+export async function deleteVulnerability(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!DATABASE_ID || !COLLECTION_ID) {
+      return {
+        success: false,
+        error: 'Appwrite configuration missing'
+      };
+    }
+
+    const databases = getDatabases();
+    await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting vulnerability:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to delete vulnerability'
+    };
+  }
+}
+
+/**
+ * Update vulnerability status (admin)
+ */
+export async function updateVulnerabilityStatus(
+  id: string,
+  status: 'Pending' | 'In-review' | 'Published' | 'verified' | 'pending' | 'under-review'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!DATABASE_ID || !COLLECTION_ID) {
+      return {
+        success: false,
+        error: 'Appwrite configuration missing'
+      };
+    }
+
+    const databases = getDatabases();
+    
+    // Map UI status to Appwrite status
+    let entryStatus: 'Pending' | 'In-review' | 'Published';
+    if (status === 'verified') {
+      entryStatus = 'Published';
+    } else if (status === 'under-review') {
+      entryStatus = 'In-review';
+    } else if (status === 'pending') {
+      entryStatus = 'Pending';
+    } else {
+      entryStatus = status as 'Pending' | 'In-review' | 'Published';
+    }
+    
+    await databases.updateDocument(
+      DATABASE_ID,
+      COLLECTION_ID,
+      id,
+      {
+        'entry-status': entryStatus
+      }
+    );
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating vulnerability status:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update vulnerability status'
+    };
+  }
+}
