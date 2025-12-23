@@ -98,22 +98,45 @@ export default function AdminPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
 
+    // Optimistic update: Remove from local state immediately
+    const entryToDelete = vulnerabilities.find(v => v.id === id);
+    setVulnerabilities(prev => prev.filter(v => v.id !== id));
+
     try {
       const response = await fetch(`/api/admin/vulnerabilities/${id}`, {
         method: 'DELETE',
       });
       const result = await response.json();
       if (result.success) {
+        // Refresh data to ensure consistency
         loadVulnerabilities();
       } else {
+        // Restore entry if delete failed
+        if (entryToDelete) {
+          setVulnerabilities(prev => [...prev, entryToDelete].sort((a, b) => 
+            b.score - a.score || new Date(b.discovered_date).getTime() - new Date(a.discovered_date).getTime()
+          ));
+        }
         alert(result.error || 'Failed to delete entry');
       }
     } catch (error) {
+      // Restore entry if delete failed
+      if (entryToDelete) {
+        setVulnerabilities(prev => [...prev, entryToDelete].sort((a, b) => 
+          b.score - a.score || new Date(b.discovered_date).getTime() - new Date(a.discovered_date).getTime()
+        ));
+      }
       alert('Error deleting entry');
     }
   };
 
   const handleStatusChange = async (id: string, newStatus: 'verified' | 'pending' | 'under-review') => {
+    // Optimistic update: Update status in local state immediately
+    const oldStatus = vulnerabilities.find(v => v.id === id)?.status;
+    setVulnerabilities(prev => prev.map(v => 
+      v.id === id ? { ...v, status: newStatus } : v
+    ));
+
     try {
       const response = await fetch(`/api/admin/vulnerabilities/${id}/status`, {
         method: 'PATCH',
@@ -122,11 +145,24 @@ export default function AdminPage() {
       });
       const result = await response.json();
       if (result.success) {
+        // Refresh data to ensure consistency
         loadVulnerabilities();
       } else {
+        // Restore old status if update failed
+        if (oldStatus) {
+          setVulnerabilities(prev => prev.map(v => 
+            v.id === id ? { ...v, status: oldStatus } : v
+          ));
+        }
         alert(result.error || 'Failed to update status');
       }
     } catch (error) {
+      // Restore old status if update failed
+      if (oldStatus) {
+        setVulnerabilities(prev => prev.map(v => 
+          v.id === id ? { ...v, status: oldStatus } : v
+        ));
+      }
       alert('Error updating status');
     }
   };
