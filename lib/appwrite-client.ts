@@ -24,9 +24,30 @@ export function getAccount() {
   return new Account(client);
 }
 
+// Delete all sessions
+export async function deleteAllSessions() {
+  const account = getAccount();
+  try {
+    await account.deleteSessions();
+  } catch (error) {
+    // Ignore errors if no sessions exist or user is not authenticated
+    // This is expected when there are no active sessions
+  }
+}
+
 // Login with email and password
 export async function login(email: string, password: string) {
   const account = getAccount();
+  
+  // First, try to delete all existing sessions to avoid "session already active" error
+  try {
+    await deleteAllSessions();
+  } catch (error) {
+    // If deletion fails (e.g., no sessions exist), continue with login
+    // This is fine - we're just trying to clear any existing sessions
+  }
+  
+  // Now create a new session
   return await account.createEmailPasswordSession(email, password);
 }
 

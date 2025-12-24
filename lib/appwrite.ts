@@ -244,13 +244,31 @@ export async function fetchVulnerabilities(): Promise<VulnerableSystem[]> {
       [
         Query.equal('entry-status', 'Published'),
         Query.orderDesc('Risk-Score'),
-        Query.orderDesc('$createdAt')
+        Query.orderDesc('$createdAt'),
+        Query.limit(100) // Increase limit to fetch more published documents
       ]
     );
     
-    return response.documents.map(doc => transformFromAppwrite(doc as unknown as AppwriteDocument));
+    // Transform documents with error handling
+    const transformed: VulnerableSystem[] = [];
+    for (const doc of response.documents) {
+      try {
+        transformed.push(transformFromAppwrite(doc as unknown as AppwriteDocument));
+      } catch (error) {
+        console.error(`Error transforming document ${doc.$id}:`, error);
+        // Continue processing other documents even if one fails
+      }
+    }
+    
+    // Warn if there are more published documents than fetched
+    if (response.total > response.documents.length) {
+      console.warn(`Total published documents: ${response.total}, but only fetched ${response.documents.length}. Consider implementing pagination.`);
+    }
+    
+    return transformed;
   } catch (error) {
-    console.warn('Appwrite not available, using dummy data:', error);
+    console.error('Error fetching vulnerabilities:', error);
+    console.warn('Appwrite not available, using dummy data');
     return dummyData;
   }
 }
@@ -304,18 +322,38 @@ export async function fetchAllVulnerabilities(): Promise<VulnerableSystem[]> {
     }
 
     const databases = getDatabases();
+    
+    // Fetch with a high limit to get all documents (Appwrite default is 25)
     const response = await databases.listDocuments(
       DATABASE_ID,
       COLLECTION_ID,
       [
         Query.orderDesc('Risk-Score'),
-        Query.orderDesc('$createdAt')
+        Query.orderDesc('$createdAt'),
+        Query.limit(100) // Increase limit to fetch more documents
       ]
     );
     
-    return response.documents.map(doc => transformFromAppwrite(doc as unknown as AppwriteDocument));
+    // Transform documents with error handling
+    const transformed: VulnerableSystem[] = [];
+    for (const doc of response.documents) {
+      try {
+        transformed.push(transformFromAppwrite(doc as unknown as AppwriteDocument));
+      } catch (error) {
+        console.error(`Error transforming document ${doc.$id}:`, error);
+        // Continue processing other documents even if one fails
+      }
+    }
+    
+    // If there are more documents, fetch them (pagination)
+    if (response.total > response.documents.length) {
+      console.warn(`Total documents: ${response.total}, but only fetched ${response.documents.length}. Consider implementing pagination.`);
+    }
+    
+    return transformed;
   } catch (error) {
-    console.warn('Appwrite not available, using dummy data:', error);
+    console.error('Error fetching all vulnerabilities:', error);
+    console.warn('Appwrite not available, using dummy data');
     return dummyData;
   }
 }

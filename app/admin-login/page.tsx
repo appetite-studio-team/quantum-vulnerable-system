@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { login } from '@/lib/appwrite-client';
+import { login, deleteAllSessions } from '@/lib/appwrite-client';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -14,6 +14,13 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Clear all sessions when the login page loads
+  useEffect(() => {
+    deleteAllSessions().catch(() => {
+      // Ignore errors - this is just cleanup
+    });
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
